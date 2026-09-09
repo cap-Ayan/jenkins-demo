@@ -6,5 +6,5 @@ function add(a, b) {
 }
 
 test("2 + 3 should equal 5", () => {
-    assert.strictEqual(add(2, 3), 10);
+    assert.strictEqual(add(2, 3), 5);
 });

@@ -1,0 +1,20 @@
+{
+  "name": "jenkins-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+ "scripts": {
+  "test": "node --test"
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cap-Ayan/jenkins-demo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cap-Ayan/jenkins-demo/issues"
+  },
+  "homepage": "https://github.com/cap-Ayan/jenkins-demo#readme"
+}

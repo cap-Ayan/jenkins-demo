@@ -53,6 +53,18 @@ pipeline {
         }
     }
 }
+
+stage('Push to ECR') {
+    steps {
+        sh '''
+            docker tag jenkins-demo:1.0 \
+            155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+
+            docker push \
+            155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+        '''
+    }
+}
     }
 
     post {

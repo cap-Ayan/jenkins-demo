@@ -31,9 +31,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Docker Build') {
             steps {
-                echo 'Build completed successfully!'
+                sh 'docker build -t jenkins-demo:1.0 .'
             }
         }
     }

@@ -1,5 +1,12 @@
-function add(a, b) {
-    return a + b;
-}
+const http = require("http");
 
-console.log(add(2, 3));
+const PORT = 3000;
+
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Hello from Jenkins + ECR + EC2!");
+});
+
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

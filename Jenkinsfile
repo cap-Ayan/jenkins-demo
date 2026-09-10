@@ -66,16 +66,19 @@ stage('Push to ECR') {
     }
 }
 
-stage('Test EC2 SSH') {
+stage('Deploy to EC2') {
     steps {
         sshagent(['ec2-ssh']) {
             sh '''
-                ssh -o StrictHostKeyChecking=no \
-                ubuntu@13.232.177.130 \
-               docker pull 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0 &&
+                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 '
+                    docker pull 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0 &&
                     docker stop jenkins-demo || true &&
                     docker rm jenkins-demo || true &&
-                    docker run -d --name jenkins-demo -p 3000:3000 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+                    docker run -d \
+                        --name jenkins-demo \
+                        -p 3000:3000 \
+                        155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+                '
             '''
         }
     }

@@ -65,6 +65,18 @@ stage('Push to ECR') {
         '''
     }
 }
+
+stage('Test EC2 SSH') {
+    steps {
+        sshagent(['ec2-ssh']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no \
+                ubuntu@13.232.177.130 \
+                "docker --version"
+            '''
+        }
+    }
+}
     }
 
     post {

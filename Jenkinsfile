@@ -31,12 +31,42 @@ pipeline {
             }
         }
 
+        stage('ECR Login') {
+            steps {
+                withCredentials([
+                    [$class: 'AmazonWebServicesCredentialsBinding',
+                     credentialsId: 'aws-ecr']
+                ]) {
+                    sh '''
+                aws ecr get-login-password --region ap-south-1 |
+                docker login --username AWS --password-stdin 155409187448.dkr.ecr.ap-south-1.amazonaws.com
+            '''
+        }
+    }
+}
+
         stage('Docker Build') {
             steps {
                 sh 'docker build -t jenkins-demo:1.0 .'
                 echo 'Docker build completed!'
             }
         }
+
+
+        stage('ECR Login') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
+            sh '''
+                aws ecr get-login-password --region ap-south-1 |
+                docker login --username AWS --password-stdin \
+                155409187448.dkr.ecr.ap-south-1.amazonaws.com
+            '''
+        }
+    }
+}
     }
 
     post {

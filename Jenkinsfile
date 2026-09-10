@@ -72,7 +72,10 @@ stage('Test EC2 SSH') {
             sh '''
                 ssh -o StrictHostKeyChecking=no \
                 ubuntu@13.232.177.130 \
-                "docker --version"
+               docker pull 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0 &&
+                    docker stop jenkins-demo || true &&
+                    docker rm jenkins-demo || true &&
+                    docker run -d --name jenkins-demo -p 3000:3000 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
             '''
         }
     }

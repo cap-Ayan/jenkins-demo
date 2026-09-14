@@ -38,7 +38,12 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+       stage('Docker Build') {
+    when {
+        expression {
+            !params.DEPLOY_VERSION?.trim()
+        }
+    }
     steps {
         sh 'docker build -t jenkins-demo:${IMAGE_TAG} .'
         echo "Docker build completed with tag: ${IMAGE_TAG}"
@@ -60,8 +65,12 @@ pipeline {
         }
     }
 }
-
 stage('Push to ECR') {
+    when {
+        expression {
+            !params.DEPLOY_VERSION?.trim()
+        }
+    }
     steps {
         sh '''
             docker tag jenkins-demo:${IMAGE_TAG} \

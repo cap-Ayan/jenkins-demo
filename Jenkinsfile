@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+
+     environment {
+        ECR_REGISTRY = '155409187448.dkr.ecr.ap-south-1.amazonaws.com'
+        ECR_REPOSITORY = 'jenkins/demo1'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     tools {
         nodejs 'node22'
     }
@@ -32,11 +39,11 @@ pipeline {
         }
 
         stage('Docker Build') {
-            steps {
-                sh 'docker build -t jenkins-demo:1.0 .'
-                echo 'Docker build completed!'
-            }
-        }
+    steps {
+        sh 'docker build -t jenkins-demo:${IMAGE_TAG} .'
+        echo "Docker build completed with tag: ${IMAGE_TAG}"
+    }
+}
 
 
         stage('ECR Login') {
@@ -57,11 +64,11 @@ pipeline {
 stage('Push to ECR') {
     steps {
         sh '''
-            docker tag jenkins-demo:1.0 \
-            155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+            docker tag jenkins-demo:${IMAGE_TAG} \
+            ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
 
             docker push \
-            155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
+            ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
         '''
     }
 }
@@ -70,20 +77,20 @@ stage('Deploy to EC2') {
     steps {
         sshagent(['ec2-ssh']) {
             sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 '
+                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 "
+                    aws ecr get-login-password --region ap-south-1 |
+                    docker login --username AWS --password-stdin ${ECR_REGISTRY} &&
 
-                     aws ecr get-login-password --region ap-south-1 |
-                    docker login --username AWS --password-stdin \
-                    155409187448.dkr.ecr.ap-south-1.amazonaws.com &&
-                    
-                    docker pull 155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0 &&
+                    docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} &&
+
                     docker stop jenkins-demo || true &&
                     docker rm jenkins-demo || true &&
+
                     docker run -d \
-                        --name jenkins-demo \
-                        -p 3000:3000 \
-                        155409187448.dkr.ecr.ap-south-1.amazonaws.com/jenkins/demo1:1.0
-                '
+                    --name jenkins-demo \
+                    -p 3000:3000 \
+                    ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
+                "
             '''
         }
     }

@@ -5,7 +5,7 @@ pipeline {
      environment {
         ECR_REGISTRY = '155409187448.dkr.ecr.ap-south-1.amazonaws.com'
         ECR_REPOSITORY = 'jenkins/demo1'
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_TAG = "${params.DEPLOY_VERSION ?: BUILD_NUMBER}"
     }
 
     tools {

@@ -99,7 +99,15 @@ stage('Deploy to EC2') {
                     echo "Active port: $ACTIVE_PORT"
                     echo "New port: $NEW_PORT"
 
-                    docker rm -f jenkins-demo-green 2>/dev/null || true
+                    if [ "$NEW_PORT" = "3000" ]; then
+                        NEW_CONTAINER="jenkins-demo-blue"
+                        OLD_CONTAINER="jenkins-demo-green"
+                    else
+                        NEW_CONTAINER="jenkins-demo-green"
+                        OLD_CONTAINER="jenkins-demo-blue"
+                    fi
+
+                    docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
 
                     aws ecr get-login-password --region ap-south-1 |
                     docker login --username AWS --password-stdin '"${ECR_REGISTRY}"' &&
@@ -107,7 +115,7 @@ stage('Deploy to EC2') {
                     docker pull '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"' &&
 
                     docker run -d \
-                        --name jenkins-demo-green \
+                        --name "$NEW_CONTAINER" \
                         -p $NEW_PORT:3000 \
                         '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'
 

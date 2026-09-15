@@ -115,14 +115,17 @@ stage('Deploy to EC2') {
 
                     if curl -f http://localhost:$NEW_PORT; then
                         echo "Green container is healthy"
-                        sudo sed -i "s/proxy_pass http:\/\/127.0.0.1:[0-9]*/proxy_pass http:\/\/127.0.0.1:$NEW_PORT/" /etc/nginx/sites-available/jenkins-demo
-                        sudo nginx -t && sudo systemctl reload nginx
+                       
                     else
                         echo "Green container is unhealthy"
                         docker logs jenkins-demo-green
                         docker rm -f jenkins-demo-green
                         exit 1
                     fi
+
+                    sudo sed -i "s|proxy_pass http://127.0.0.1:[0-9]*|proxy_pass http://127.0.0.1:$NEW_PORT|" /etc/nginx/sites-available/jenkins-demo
+
+                    sudo nginx -t && sudo systemctl reload nginx
                 '
             '''
         }

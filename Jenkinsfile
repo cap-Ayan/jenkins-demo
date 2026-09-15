@@ -86,9 +86,9 @@ stage('Deploy to EC2') {
     steps {
         sshagent(['ec2-ssh']) {
             sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 "
-
-                    ACTIVE_PORT=$(grep -oP 'proxy_pass http://127\.0\.0\.1:\K[0-9]+' /etc/nginx/sites-available/jenkins-demo)
+                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 '
+                    
+                    ACTIVE_PORT=$(grep -oP "proxy_pass http://127\\.0\\.0\\.1:\\K[0-9]+" /etc/nginx/sites-available/jenkins-demo)
 
                     if [ "$ACTIVE_PORT" = "3000" ]; then
                         NEW_PORT=3001
@@ -96,21 +96,21 @@ stage('Deploy to EC2') {
                         NEW_PORT=3000
                     fi
 
+                    echo "Active port: $ACTIVE_PORT"
+                    echo "New port: $NEW_PORT"
+
                     docker rm -f jenkins-demo-green 2>/dev/null || true
 
-
                     aws ecr get-login-password --region ap-south-1 |
-                    docker login --username AWS --password-stdin ${ECR_REGISTRY} &&
+                    docker login --username AWS --password-stdin '"${ECR_REGISTRY}"' &&
 
-                    docker pull ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} &&
-
-                    
+                    docker pull '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"' &&
 
                     docker run -d \
-                    --name jenkins-demo \
-                    -p ${NEW_PORT}:3000 \
-                    ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}
-                "
+                        --name jenkins-demo-green \
+                        -p $NEW_PORT:3000 \
+                        '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'
+                '
             '''
         }
     }

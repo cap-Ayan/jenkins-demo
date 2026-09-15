@@ -110,6 +110,17 @@ stage('Deploy to EC2') {
                         --name jenkins-demo-green \
                         -p $NEW_PORT:3000 \
                         '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'
+
+                    sleep 5
+
+                    if curl -f http://localhost:$NEW_PORT; then
+                        echo "Green container is healthy"
+                    else
+                        echo "Green container is unhealthy"
+                        docker logs jenkins-demo-green
+                        docker rm -f jenkins-demo-green
+                        exit 1
+                    fi
                 '
             '''
         }

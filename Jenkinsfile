@@ -134,6 +134,12 @@ stage('Deploy to EC2') {
                     sudo sed -i "s|proxy_pass http://127.0.0.1:[0-9]*|proxy_pass http://127.0.0.1:$NEW_PORT|" /etc/nginx/sites-available/jenkins-demo
 
                     sudo nginx -t && sudo systemctl reload nginx
+
+                    echo "Traffic switched to $NEW_PORT"
+
+                    docker rm -f "$OLD_CONTAINER" 2>/dev/null || true
+
+                    echo "Old container removed: $OLD_CONTAINER"
                 '
             '''
         }

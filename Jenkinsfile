@@ -82,6 +82,12 @@ stage('Push to ECR') {
     }
 }
 
+stage('Approval') {
+    steps {
+        input message: 'Deploy to EC2?', ok: 'Deploy'
+    }
+}
+
 stage('Deploy to EC2') {
     steps {
         sshagent(['ec2-ssh']) {
@@ -136,6 +142,25 @@ stage('Deploy to EC2') {
                     sudo nginx -t && sudo systemctl reload nginx
 
                     echo "Traffic switched to $NEW_PORT"
+
+                    sleep 2
+
+                    if curl -f http://localhost:$NEW_PORT; then
+                        echo "New version is serving traffic successfully"
+                    else
+                        echo "New version failed after traffic switch"
+                        echo "Rolling back to old port: $ACTIVE_PORT"
+
+                        sudo sed -i "s|proxy_pass http://127.0.0.1:[0-9]*|proxy_pass http://127.0.0.1:$ACTIVE_PORT|" /etc/nginx/sites-available/jenkins-demo
+
+                        sudo nginx -t && sudo systemctl reload nginx
+
+                        docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
+
+                            echo "Rollback completed. Traffic restored to $ACTIVE_PORT"
+
+                        exit 1
+                    fi
 
                     docker rm -f "$OLD_CONTAINER" 2>/dev/null || true
 

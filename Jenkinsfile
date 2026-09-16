@@ -121,7 +121,7 @@ stage('Deploy to EC2') {
 
                     sleep 5
 
-                    if curl -f http://localhost:$NEW_PORT/invalid-health && false; then
+                    if curl -f http://localhost:$NEW_PORT; then
                         echo "$NEW_CONTAINER is healthy"
                        
                     else

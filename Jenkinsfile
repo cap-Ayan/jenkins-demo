@@ -122,12 +122,12 @@ stage('Deploy to EC2') {
                     sleep 5
 
                     if curl -f http://localhost:$NEW_PORT; then
-                        echo "Green container is healthy"
+                        echo "$NEW_CONTAINER is healthy"
                        
                     else
-                        echo "Green container is unhealthy"
-                        docker logs jenkins-demo-green
-                        docker rm -f jenkins-demo-green
+                        echo "$NEW_CONTAINER is unhealthy"
+                        docker logs $NEW_CONTAINER
+                        docker rm -f $NEW_CONTAINER
                         exit 1
                     fi
 

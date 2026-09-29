@@ -150,7 +150,34 @@ stage('Register ECS Task Definition') {
             sh '''
                 aws ecs register-task-definition \
                 --cli-input-json file://new-taskdef.json \
-                --region ap-south-1
+                --region ap-south-1 \
+                --query 'taskDefinition.taskDefinitionArn' \
+                --output text > taskdef-arn.txt
+
+                echo "Registered Task Definition:"
+                cat taskdef-arn.txt
+            '''
+        }
+    }
+}
+
+stage('Update ECS Service') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
+            sh '''
+                TASK_DEF_ARN=$(cat taskdef-arn.txt)
+
+                echo "Updating ECS service with:"
+                echo "$TASK_DEF_ARN"
+
+                aws ecs update-service \
+                    --cluster jenkins-demo-cluster \
+                    --service jenkins-demo-service \
+                    --task-definition "$TASK_DEF_ARN" \
+                    --region ap-south-1
             '''
         }
     }

@@ -182,6 +182,22 @@ stage('Update ECS Service') {
         }
     }
 }
+
+stage('Wait for ECS') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
+            sh '''
+                aws ecs wait services-stable \
+                    --cluster jenkins-demo-cluster \
+                    --services jenkins-demo-service \
+                    --region ap-south-1
+            '''
+        }
+    }
+}
     }
 
     post {

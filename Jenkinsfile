@@ -88,84 +88,17 @@ stage('Approval') {
     }
 }
 
-stage('Deploy to EC2') {
+stage('Check ECS') {
     steps {
-        sshagent(['ec2-ssh']) {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
             sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@13.232.177.130 '
-                    
-                    ACTIVE_PORT=$(grep -oP "proxy_pass http://127\\.0\\.0\\.1:\\K[0-9]+" /etc/nginx/sites-available/jenkins-demo)
-
-                    if [ "$ACTIVE_PORT" = "3000" ]; then
-                        NEW_PORT=3001
-                    else
-                        NEW_PORT=3000
-                    fi
-
-                    echo "Active port: $ACTIVE_PORT"
-                    echo "New port: $NEW_PORT"
-
-                    if [ "$NEW_PORT" = "3000" ]; then
-                        NEW_CONTAINER="jenkins-demo-blue"
-                        OLD_CONTAINER="jenkins-demo-green"
-                    else
-                        NEW_CONTAINER="jenkins-demo-green"
-                        OLD_CONTAINER="jenkins-demo-blue"
-                    fi
-
-                    docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
-
-                    aws ecr get-login-password --region ap-south-1 |
-                    docker login --username AWS --password-stdin '"${ECR_REGISTRY}"' &&
-
-                    docker pull '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"' &&
-
-                    docker run -d \
-                        --name "$NEW_CONTAINER" \
-                        -p $NEW_PORT:3000 \
-                        '"${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"'
-
-                    sleep 5
-
-                    if curl -f http://localhost:$NEW_PORT; then
-                        echo "$NEW_CONTAINER is healthy"
-                       
-                    else
-                        echo "$NEW_CONTAINER is unhealthy"
-                        docker logs $NEW_CONTAINER
-                        docker rm -f $NEW_CONTAINER
-                        exit 1
-                    fi
-
-                    sudo sed -i "s|proxy_pass http://127.0.0.1:[0-9]*|proxy_pass http://127.0.0.1:$NEW_PORT|" /etc/nginx/sites-available/jenkins-demo
-
-                    sudo nginx -t && sudo systemctl reload nginx
-
-                    echo "Traffic switched to $NEW_PORT"
-
-                    sleep 2
-
-                    if curl -f http://localhost:$NEW_PORT; then
-                        echo "New version is serving traffic successfully"
-                    else
-                        echo "New version failed after traffic switch"
-                        echo "Rolling back to old port: $ACTIVE_PORT"
-
-                        sudo sed -i "s|proxy_pass http://127.0.0.1:[0-9]*|proxy_pass http://127.0.0.1:$ACTIVE_PORT|" /etc/nginx/sites-available/jenkins-demo
-
-                        sudo nginx -t && sudo systemctl reload nginx
-
-                        docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
-
-                            echo "Rollback completed. Traffic restored to $ACTIVE_PORT"
-
-                        exit 1
-                    fi
-
-                    docker rm -f "$OLD_CONTAINER" 2>/dev/null || true
-
-                    echo "Old container removed: $OLD_CONTAINER"
-                '
+                aws ecs describe-services \
+                --cluster jenkins-demo-cluster \
+                --services jenkins-demo-service \
+                --region ap-south-1
             '''
         }
     }

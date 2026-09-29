@@ -140,6 +140,21 @@ stage('Prepare ECS Task Definition') {
         }
     }
 }
+
+stage('Register ECS Task Definition') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
+            sh '''
+                aws ecs register-task-definition \
+                --cli-input-json file://new-taskdef.json \
+                --region ap-south-1
+            '''
+        }
+    }
+}
     }
 
     post {

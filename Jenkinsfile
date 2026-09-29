@@ -94,6 +94,8 @@ stage('Check jq') {
     }
 }
 
+
+
 stage('Check ECS') {
     steps {
         withCredentials([
@@ -105,6 +107,35 @@ stage('Check ECS') {
                 --cluster jenkins-demo-cluster \
                 --services jenkins-demo-service \
                 --region ap-south-1
+            '''
+        }
+    }
+}
+
+stage('Prepare ECS Task Definition') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws-ecr']
+        ]) {
+            sh '''
+                aws ecs describe-task-definition \
+                --task-definition jenkins-demo \
+                --region ap-south-1 \
+                --query taskDefinition > taskdef.json
+
+                jq --arg IMAGE "${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}" \
+                '.containerDefinitions[0].image = $IMAGE |
+                 del(
+                    .taskDefinitionArn,
+                    .revision,
+                    .status,
+                    .requiresAttributes,
+                    .compatibilities,
+                    .registeredAt,
+                    .registeredBy
+                 )' \
+                taskdef.json > new-taskdef.json
             '''
         }
     }

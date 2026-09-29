@@ -88,6 +88,12 @@ stage('Approval') {
     }
 }
 
+stage('Check jq') {
+    steps {
+        sh 'jq --version'
+    }
+}
+
 stage('Check ECS') {
     steps {
         withCredentials([
